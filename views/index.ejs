@@ -4,57 +4,174 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario de Dispositivos</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #f0f3f4;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        nav {
+            background-color: #f6f6f6;
+        }
+        nav a.nav-link {
+            color: #001f3f;
+            font-weight: bold; 
+            text-transform: uppercase; 
+        }
+        .navbar-brand img {
+            width: 50px;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+        .nav-left, .nav-right {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .table {
+            margin-top: 20px;
+            border: 2px solid #001f3f;
+        }
+        .table th, .table td {
+            border: 2px solid #001f3f;
+            font-weight: normal;
+            text-align: center; 
+        }
+        .table th {
+            font-weight: bold;
+        }
+        .table thead {
+            background-color: #001f3f;
+            color: #ffffff;
+        }
+        .custom-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #001f3f;
+            margin-bottom: 20px;
+        }
+        .price-format {
+            font-weight: normal;
+            color: #001f3f;
+        }
+        .btn-primary, .btn-edit, .btn-sell {
+            background-color: #001f3f;
+            border-color: #001f3f;
+        }
+        .btn-edit i, .btn-sell i {
+            color: #ffffff;
+        }
+        .btn-floating {
+            position: relative;
+            display: inline-block;
+            float: right;
+            margin-top: 10px;
+            font-size: 32px;
+        }
+        .btn-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px; 
+        }
+        .btn-edit, .btn-sell {
+            display: inline-block;
+            font-size: 16px; 
+            padding: 5px 10px;
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+            }
+            .btn-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Inventario</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/historial">Historial</a>
-                    </li>
-                </ul>
-            </div>
-            <!-- Botón para abrir el modal de agregar dispositivos -->
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
-                Agregar Dispositivo
-            </button>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="nav-left">
+            <a class="nav-link" href="/historial">historial</a>
+        </div>
+        <div class="navbar-brand">
+            <img src="https://toppng.com/uploads/preview/phone-icon-blue-mobile-icon-11553392717a4g7h3wf6a.png" alt="Logo">
+        </div>
+        <div class="nav-right">
+            <a class="nav-link" href="/">inventario</a>
         </div>
     </nav>
 
-    <div class="container my-4">
-        <h1>Inventario de Dispositivos Disponibles</h1>
-        <form action="/vender" method="POST">
-            <table class="table table-bordered">
-                <thead class="thead-dark">
-                    <tr>
-                        <th>Seleccionar</th>
-                        <th>Nombre</th>
-                        <th>Marca</th>
-                        <th>Precio</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% dispositivos.forEach(dispositivo => { %>
-                    <tr>
-                        <td><input type="checkbox" name="dispositivoIds" value="<%= dispositivo.id %>"></td>
-                        <td><%= dispositivo.nombre %></td>
-                        <td><%= dispositivo.marca %></td>
-                        <td><%= dispositivo.precio %></td>
-                        <td><%= dispositivo.estado %></td>
-                    </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-            <!-- Botón para marcar como vendido -->
-            <button type="submit" class="btn btn-success">Marcar como Vendido</button>
-        </form>
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Título de la página -->
+        <h2 class="custom-title">DISPOSITIVOS DISPONIBLES</h2>
+
+        <!-- Tabla de dispositivos -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Marca</th>
+                    <th>Costo de Compra</th>
+                    <th>Fecha de Ingreso</th>
+                    <th>IMEI</th>
+                    <th>Gastos Extra</th>
+                    <th>Descripción del Gasto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% dispositivos.forEach(dispositivo => { %>
+                <% if (dispositivo.estado !== 'vendido') { %>
+                <tr>
+                    <td><%= dispositivo.nombre %></td>
+                    <td><%= dispositivo.marca %></td>
+                    <td>$<%= dispositivo.costo_compra.toFixed(2) %></td> <!-- Costo formateado con decimales -->
+                    <td>
+                        <% if (dispositivo.fecha_ingreso && dispositivo.fecha_ingreso.toDate) { %>
+                            <%= dispositivo.fecha_ingreso.toDate().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }) %>
+                        <% } else { %>
+                            Sin fecha
+                        <% } %>
+                    </td>
+                    <td><%= dispositivo.imei %></td>
+                    <td>$<%= dispositivo.gastos_extra.toFixed(2) %></td> <!-- Gastos extra formateados -->
+                    <td><%= dispositivo.descripcion_gasto %></td>
+                    <td class="btn-actions">
+                        <!-- Botón para vender dispositivo -->
+                        <button type="button" class="btn btn-sell" data-id="<%= dispositivo.id %>">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                        <!-- Botón para editar dispositivo -->
+                        <button type="button" class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editDeviceModal" data-id="<%= dispositivo.id %>">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+                <% } %>
+                <% }); %>
+            </tbody>
+        </table>
+
+        <!-- Botón flotante para agregar dispositivo -->
+        <button type="button" class="btn btn-primary btn-floating" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+            <i class="fas fa-plus-circle"></i>
+        </button>
     </div>
 
     <!-- Modal para agregar dispositivos -->
@@ -76,15 +193,24 @@
                             <input type="text" class="form-control" id="marca" name="marca" required>
                         </div>
                         <div class="mb-3">
-                            <label for="precio" class="form-label">Precio</label>
-                            <input type="number" class="form-control" id="precio" name="precio" required>
+                            <label for="costo_compra" class="form-label">Costo de Compra</label>
+                            <input type="number" class="form-control" id="costo_compra" name="costo_compra" required>
                         </div>
                         <div class="mb-3">
-                            <label for="estado" class="form-label">Estado</label>
-                            <select class="form-control" id="estado" name="estado">
-                                <option value="disponible">Disponible</option>
-                                <option value="vendido">Vendido</option>
-                            </select>
+                            <label for="fecha_ingreso" class="form-label">Fecha de Ingreso</label>
+                            <input type="date" class="form-control" id="fecha_ingreso" name="fecha_ingreso" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imei" class="form-label">IMEI</label>
+                            <input type="text" class="form-control" id="imei" name="imei" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gastos_extra" class="form-label">Gastos Extra</label>
+                            <input type="number" class="form-control" id="gastos_extra" name="gastos_extra" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion_gasto" class="form-label">Descripción del Gasto Extra</label>
+                            <textarea class="form-control" id="descripcion_gasto" name="descripcion_gasto" rows="3"></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary">Agregar</button>
                     </form>
@@ -93,6 +219,98 @@
         </div>
     </div>
 
+    <!-- Modal para editar dispositivos -->
+    <div class="modal fade" id="editDeviceModal" tabindex="-1" aria-labelledby="editDeviceModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDeviceModalLabel">Editar Dispositivo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDeviceForm" action="/editar" method="POST">
+                        <input type="hidden" id="editDeviceId" name="id">
+                        <div class="mb-3">
+                            <label for="gastos_extra_edit" class="form-label">Gastos Extra</label>
+                            <input type="number" class="form-control" id="gastos_extra_edit" name="gastos_extra" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion_gasto_edit" class="form-label">Descripción del Gasto Extra</label>
+                            <textarea class="form-control" id="descripcion_gasto_edit" name="descripcion_gasto" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3" id="precio_venta_container" style="display: none;">
+                            <label for="costo_venta_edit" class="form-label">Costo de Venta</label>
+                            <input type="number" class="form-control" id="costo_venta_edit" name="costo_venta">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+    document.querySelectorAll('.btn-sell').forEach((sellButton) => {
+        sellButton.addEventListener('click', async function() {
+            const deviceId = this.dataset.id;
+            const { value: precioVenta } = await Swal.fire({
+                title: '¿Estás segura de marcar este dispositivo como vendido?',
+                input: 'number',
+                inputLabel: 'Ingresa el precio de venta',
+                inputPlaceholder: 'Precio de venta',
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar',
+                cancelButtonText: 'Cancelar',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Necesitas ingresar un precio de venta';
+                    }
+                }
+            });
+
+            if (precioVenta) {
+                const fechaVenta = new Date().toISOString(); // Obtener la fecha actual
+
+                fetch(`/cambiar-estado`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: deviceId,
+                        estado: 'vendido',
+                        costo_venta: precioVenta,
+                        fecha_venta: fechaVenta // Enviar la fecha de venta
+                    }),
+                }).then(() => location.reload());
+            }
+        });
+    });
+
+    document.querySelectorAll('button[data-bs-target="#editDeviceModal"]').forEach((button) => {
+        button.addEventListener('click', function () {
+            const deviceId = this.dataset.id;
+
+            document.getElementById('editDeviceId').value = deviceId; // Asignar el ID del dispositivo al campo oculto
+
+            fetch(`/obtener-dispositivo/${deviceId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('gastos_extra_edit').value = data.gastos_extra;
+                    document.getElementById('descripcion_gasto_edit').value = data.descripcion_gasto;
+
+                    if (data.estado === 'vendido') {
+                        document.getElementById('precio_venta_container').style.display = 'block';
+                        document.getElementById('costo_venta_edit').value = data.costo_venta;
+                    } else {
+                        document.getElementById('precio_venta_container').style.display = 'none';
+                    }
+                });
+        });
+    });
+    </script>
 </body>
 </html>

@@ -3,7 +3,8 @@ const db = require('./dbconfig.js');  // Conexión a Firebase Firestore
 const app = express();
 const port = 3000;
 
-app.use(express.urlencoded({ extended: true }));  // Middleware para manejar los datos del formulario
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());  // Middleware para manejar JSON
 
 // Configurar EJS como motor de vistas
 app.set('view engine', 'ejs');
@@ -23,43 +24,6 @@ app.get('/', async (req, res) => {
     }
 });
 
-// Ruta para marcar uno o varios dispositivos como vendidos
-app.post('/vender', async (req, res) => {
-    const dispositivosIds = req.body.dispositivoIds;
-    try {
-        if (Array.isArray(dispositivosIds)) {
-            // Si se seleccionan varios dispositivos
-            for (const id of dispositivosIds) {
-                await db.collection('dispositivos').doc(id).update({ estado: 'vendido' });
-            }
-        } else if (dispositivosIds) {
-            // Si solo se selecciona un dispositivo
-            await db.collection('dispositivos').doc(dispositivosIds).update({ estado: 'vendido' });
-        }
-        res.redirect('/');
-    } catch (err) {
-        console.error('Error al actualizar los dispositivos', err);
-        res.status(500).send('Error al actualizar los dispositivos');
-    }
-});
-
-// Ruta para agregar un nuevo dispositivo
-app.post('/agregar', async (req, res) => {
-    const { nombre, marca, precio, estado } = req.body;
-    try {
-        await db.collection('dispositivos').add({
-            nombre,
-            marca,
-            precio: parseFloat(precio),
-            estado
-        });
-        res.redirect('/');
-    } catch (err) {
-        console.error('Error al agregar el dispositivo', err);
-        res.status(500).send('Error al agregar el dispositivo');
-    }
-});
-
 // Ruta para mostrar todos los dispositivos (historial)
 app.get('/historial', async (req, res) => {
     try {
@@ -72,6 +36,101 @@ app.get('/historial', async (req, res) => {
     } catch (err) {
         console.error('Error al obtener el historial', err);
         res.status(500).send('Error al obtener el historial');
+    }
+});
+
+// Ruta para agregar un nuevo dispositivo
+app.post('/agregar', async (req, res) => {
+    const { nombre, marca, costo_compra, fecha_ingreso, imei, gastos_extra, descripcion_gasto, estado } = req.body;
+
+    try {
+        const nuevoDispositivo = {
+            nombre,
+            marca,
+            costo_compra: parseFloat(costo_compra),
+            fecha_ingreso: fecha_ingreso ? new Date(fecha_ingreso) : new Date(),
+            imei,
+            gastos_extra: parseFloat(gastos_extra),
+            descripcion_gasto,
+            estado: estado || 'disponible'
+        };
+
+        const docRef = await db.collection('dispositivos').add(nuevoDispositivo);
+        const idGenerado = docRef.id;
+
+        // Actualizar el documento con el ID generado
+        await db.collection('dispositivos').doc(idGenerado).update({ id: idGenerado });
+
+        res.redirect('/');
+    } catch (err) {
+        console.error('Error al agregar el dispositivo', err);
+        res.status(500).send('Error al agregar el dispositivo');
+    }
+});
+
+// Ruta para cambiar el estado del dispositivo
+app.post('/cambiar-estado', async (req, res) => {
+    const { id, estado, costo_venta, fecha_venta } = req.body;
+
+    if (!id) {
+        return res.status(400).send('ID no proporcionado');
+    }
+
+    try {
+        const updateData = { estado };
+        if (estado === 'vendido') {
+            updateData.costo_venta = parseFloat(costo_venta);
+            updateData.fecha_venta = fecha_venta ? new Date(fecha_venta) : new Date();
+        }
+
+        await db.collection('dispositivos').doc(id).update(updateData);
+        res.sendStatus(200);
+    } catch (err) {
+        console.error('Error al cambiar el estado del dispositivo', err);
+        res.status(500).send('Error al cambiar el estado del dispositivo');
+    }
+});
+
+// Ruta para editar un dispositivo
+app.post('/editar', async (req, res) => {
+    const { id, gastos_extra, descripcion_gasto, costo_venta } = req.body;
+
+    if (!id) {
+        return res.status(400).send('ID no proporcionado');
+    }
+
+    try {
+        const updateData = {
+            gastos_extra: parseFloat(gastos_extra),
+            descripcion_gasto
+        };
+        
+        if (costo_venta) {
+            updateData.costo_venta = parseFloat(costo_venta);
+        }
+
+        await db.collection('dispositivos').doc(id).update(updateData);
+        res.redirect('/');
+    } catch (err) {
+        console.error('Error al editar el dispositivo', err);
+        res.status(500).send('Error al editar el dispositivo');
+    }
+});
+
+// Ruta para obtener los datos de un dispositivo
+app.get('/obtener-dispositivo/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const dispositivoDoc = await db.collection('dispositivos').doc(id).get();
+        if (dispositivoDoc.exists) {
+            res.json(dispositivoDoc.data());
+        } else {
+            res.status(404).send('Dispositivo no encontrado');
+        }
+    } catch (err) {
+        console.error('Error al obtener el dispositivo', err);
+        res.status(500).send('Error al obtener el dispositivo');
     }
 });
 
